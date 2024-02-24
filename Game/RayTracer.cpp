@@ -98,6 +98,7 @@ void RayTracer::RayTrace() {
 
 }
 
+//fml
 unsigned char* RayTracer::getTextureData() {
     return this->texture_data;
 }

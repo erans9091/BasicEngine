@@ -14,6 +14,12 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+# Find OpenGL package
+find_package(OpenGL REQUIRED)
+
+# Add OpenGL include directories
+include_directories(${OPENGL_INCLUDE_DIRS})
+
 file(GLOB GAME Game/*.cpp Game/*.h)
 file(GLOB ENGINE Engine3D/*.cpp Engine3D/*.c  Engine3D/*.h)
 file(GLOB DISPLAY DisplayGLFW/*.cpp DisplayGLFW/*.h)
@@ -30,5 +36,4 @@ add_library(Engine ${ENGINE})
 
 add_executable(${PROJ_NAME} ${GAME})
 
-target_link_libraries(${PROJ_NAME} Engine Display glfw glad)
-
+target_link_libraries(${PROJ_NAME} Engine Display glfw glad ${OPENGL_LIBRARIES})

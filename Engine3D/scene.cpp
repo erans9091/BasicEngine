@@ -114,6 +114,60 @@
 		pickedShape = p;
 	}
 
+	void Scene::customDraw(int shaderIndx, int cameraIndx, int buffer, bool toClear, bool debugMode, int viewPortIndx)
+	{
+		glEnable(GL_DEPTH_TEST);
+		glm::mat4 Normal = MakeTrans();
+		glm::mat4 MVP = cameras[cameraIndx]->GetViewProjection() * glm::inverse(cameras[cameraIndx]->MakeTrans());
+		int p = pickedShape;
+		const int width = 512, height = 512;
+		if (toClear)
+		{
+			if (shaderIndx > 0)
+				Clear(1, 0, 1, 1);
+			else
+				Clear(0, 0, 0, 0);
+		}
+		if (viewPortIndx == 0)
+		{
+			//draw grey-scale original photo
+			glViewport(0, height / 2, width / 2, height / 2);// top left
+
+		}else if (viewPortIndx == 1)
+		{
+			//sobel algorithm - edages liness
+			glViewport(width * 0.5, height * 0.5, width * 0.5, height * 0.5);// top right
+		}
+		else if (viewPortIndx == 2)
+		{
+			//halftoning algorithm - patterns
+			glViewport(0, 0, width * 0.5, height * 0.5);//bottom left
+		}
+		else if (viewPortIndx == 3)
+		{
+			//Floyd-Steinberg Algorithm - 256 to 16 bit per pixel
+			glViewport(width * 0.5, 0, width * 0.5, height * 0.5);// bottom right	
+		}
+		for (unsigned int i = 0; i < shapes.size(); i++)
+		{
+			if (shapes[i]->Is2Render())
+			{
+				glm::mat4 Model = Normal * shapes[i]->MakeTrans();
+
+				if (shaderIndx > 0)
+				{
+					Update(MVP, Model, shapes[i]->GetShader());
+					shapes[i]->Draw(shaders, textures, false);
+				}
+				else
+				{ //picking
+					Update(MVP, Model, 0);
+					shapes[i]->Draw(shaders, textures, true);
+				}
+			}
+		}
+	}
+
 	void Scene::MoveCamera(int cameraIndx,int type,float amt)
 	{
 		switch (type)

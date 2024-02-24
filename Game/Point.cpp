@@ -15,7 +15,7 @@ Point::Point(const Point& p) {
 Point::~Point() {} //no resources..
 
 Vector Point::operator-(const Point & p) {
-	return Vector(x - p.x, y - p.y, z - p.z);
+	return Vector(x - p.getX(), y - p.getY(), z - p.getZ());
 }
 
 Point Point::operator+(const Vector& v) {

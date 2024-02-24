@@ -25,10 +25,11 @@ class RayTracer {
 public:
 	RayTracer(std::string path);
 	void RayTrace();
-	Color RecursiveRayTrace(Ray incomingRay , int recursionLevel);
-	intersectionData * SceneIntersectionWithRay(Ray ray);
+	Color RecursiveRayTrace(Ray incomingRay , int recursionLevel, int isInitialRay);
+	intersectionData * SceneIntersectionWithRay(Ray ray,  int initial);
 	unsigned char* getTextureData();
 	int InShadow(Ray intersectionRay , int intersectedShapeIdx);
+	Ray getTranspRay(Ray r,Point interPnt,int shapeIdx);
 private:
 	std::vector<ObjectShape*>objects;
 	std::vector<Light* > sceneLights;

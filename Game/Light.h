@@ -13,6 +13,8 @@ public:
 	virtual ~Light() {};
 	virtual Color CalcColorAtPoint(Point& p, Vector& normalAtPoint, ObjectShape * shape) = 0;
 	virtual Ray occlusionRay(Point& intersectionWithObject)=0;
+	virtual Ray reflectionRay(Point& intersectionWithObject ,  Vector & normalAtPoint) = 0;
+	//virtual Ray refractionRay(Point& intersectionWithObject) = 0;
 	Color getIntensity() const;
 	static Point cameraPosition;
 protected:
@@ -28,6 +30,8 @@ public:
 	Ambient(float r, float g, float b, float a) :Light(r, g, b, a) {};
 	Ray occlusionRay(Point& intersectionWithObject) override;
 	virtual Color CalcColorAtPoint(Point& p, Vector& normalAtPoint, ObjectShape * shape) override;
+	Ray reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint);
+	//Ray refractionRay(Point& intersectionWithObject);
 };
 
 class Directional : public Light {
@@ -36,6 +40,8 @@ public:
 	~Directional();
 	Color CalcColorAtPoint(Point& p, Vector& normalAtPoint, ObjectShape * shape) override;
 	Ray occlusionRay(Point& intersectionWithObject) override;
+	Ray reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint);
+	//Ray refractionRay(Point& intersectionWithObject);
 private:
 	Vector lightDirection;
 };
@@ -43,11 +49,15 @@ private:
 
 class Spotlight : public Light {
 public:
-	Spotlight(float r, float g, float b, float a, Vector lightDir, Point lightIncidenceP);
+	Spotlight(float r, float g, float b, float a, Vector lightDir, Point lightIncidenceP, float cosCutoffAngle);
 	~Spotlight();
 	Color CalcColorAtPoint(Point& p, Vector& normalAtPoint, ObjectShape * shape) override;
 	Ray occlusionRay(Point& intersectionWithObject) override;
+	Ray reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint);
+	//Ray refractionRay(Point& intersectionWithObject);
 private:
+	//float getCutoff();
+	float cosCutoffAngle;
 	Vector lightDirection;
 	Point lightIncidencePoint;
 	

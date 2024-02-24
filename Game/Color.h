@@ -13,9 +13,14 @@ public:
 	float getG() const;
 	float getB() const;
 	float getA() const;
+	void ClampColor();
+
+	
 
 private:
-
+	void clampR();
+	void clampG();
+	void clampB();
 	float r;
 	float g;
 	float b;

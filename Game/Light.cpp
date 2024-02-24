@@ -29,7 +29,11 @@ Point Light::cameraPosition = Point();
 
 
 	Color Ambient::CalcColorAtPoint( Point& p, Vector& normalAtPoint, ObjectShape* shape) {
-		return shape->ambient * intensity; // Iambient * Kambient
+		return shape->getDiffuse(p) * intensity; // Iambient * Kambient
+	}
+
+	Ray Ambient::reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint) {
+		return Ray(Vector(), Point());
 	}
 
 	Ambient::~Ambient() {}
@@ -47,11 +51,13 @@ Point Light::cameraPosition = Point();
 	Spotlight::~Spotlight() {};
 
 	Color Directional::CalcColorAtPoint(Point& p, Vector & normalAtPoint, ObjectShape* shape) {
-		Vector negatedDirection = this->lightDirection;
+		Vector negatedDirection = this->lightDirection.Negate();
+		//normalAtPoint = normalAtPoint.Negate();
 		float angleLightDirAndNormal = negatedDirection * normalAtPoint;
 		angleLightDirAndNormal = angleLightDirAndNormal; // N * L    clamp to zero if surface is facing away from the light
+	//	std::cout << "angle light and normal: " << angleLightDirAndNormal;
 		angleLightDirAndNormal = fmaxf(angleLightDirAndNormal, 0.0); // N * L    clamp to zero if surface is facing away from the light
-		//angleLightDirAndNormal = fabsf(angleLightDirAndNormal);
+		//angleLightDirAndNormal = fabs(angleLightDirAndNormal);
 		Color lightIntensityAtPoint = this->intensity;//intensity is constant for directional light!
 
 
@@ -63,7 +69,7 @@ Point Light::cameraPosition = Point();
 		int isNormalFacingAwayFromLightDir = angleLightDirAndNormal > 0 ? 1 : 0;
 
 		float angleReflectVecToViewerVec = reflectionVector * intersectionToViewerVec; // V*R
-		//angleReflectVecToViewerVec = fmaxf(angleReflectVecToViewerVec, 0.0); //clamp to zero if angle greater than a right angle
+		angleReflectVecToViewerVec = fmaxf(angleReflectVecToViewerVec, 0.0); //clamp to zero if angle greater than a right angle
 		//angleReflectVecToViewerVec = fabsf(angleReflectVecToViewerVec); //c
 		Color diffuseReflectionIntensity = lightIntensityAtPoint.Modulate(angleLightDirAndNormal); // I * (N * L)
 		float specCoeff = powf(angleReflectVecToViewerVec, shape->ambient.getA()); // specular intensity coefficient =  (V * R) ^ n ,where n is the 
@@ -73,19 +79,24 @@ Point Light::cameraPosition = Point();
 		diffuseReflectionIntensity = diffuseReflectionIntensity * shape->getDiffuse(p);
 		specularReflectionIntensity = specularReflectionIntensity * shape->specular;
 		
-
 		return diffuseReflectionIntensity + specularReflectionIntensity ; // check where to derive the coefficenits : constant , linear, quadratic
 	}
 
 	Ray Directional::occlusionRay(Point& intersectionWithObject) {
 		return Ray(this->lightDirection.Negate(), intersectionWithObject); // the occlusion ray is the ray that starts from the intersection point , and goes in the opposite direction of the light direction vector
 	}
-		
+	
+
+	Ray Directional::reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint) {
+		Vector rayDirection = normalAtPoint * 2 * (normalAtPoint * this->lightDirection) - this->lightDirection;
+		return Ray(rayDirection, intersectionWithObject);
+	}
+
 
 
 	Color Spotlight::CalcColorAtPoint(Point & p, Vector & normalAtPoint, ObjectShape* shape ) {
-		Vector negatedDirection = this->lightDirection;
-		Vector vecFromPixelToLight = p - lightIncidencePoint    ; // L=P-Q , where Q is the intersection point
+		Vector negatedDirection = this->lightDirection.Negate();
+		Vector vecFromPixelToLight = lightIncidencePoint - p     ; // L=P-Q , where Q is the intersection point
 		vecFromPixelToLight.NormalizeVec(); //normalized 
 
 		Vector reflectionVector = ((normalAtPoint * 2.0) * (vecFromPixelToLight * normalAtPoint)) - vecFromPixelToLight; // 2* N * (N * L) - L
@@ -103,7 +114,7 @@ Point Light::cameraPosition = Point();
 		angleNormalAndToLightVec = fmaxf(0.0, angleNormalAndToLightVec);
 
 		if (angleNormalAndToLightVec >0 && angleLightDirToLightVector > cosCutoffAngle) {
-			std::cout << "fml";
+	//		std::cout << "fml";
 		}
 
 		//angleNormalAndToLightVec = fmaxf(0.0, angleNormalAndToLightVec); //clamp to zero if normal direction is facing away from the light direction
@@ -112,7 +123,7 @@ Point Light::cameraPosition = Point();
 
 
 		//float lightRatio = fmaxf(0.0, angleLightDirToLightVector); //clamp to zero if the dot product is negative - i.e object facing away from the light
-		float lightRatio = angleLightDirToLightVector > cosCutoffAngle ? angleLightDirToLightVector : 0.0; //light dosent reach the point of the angle between to light vector and prefered light direction is greater than cutoff angle!
+		float lightRatio = angleLightDirToLightVector > cosCutoffAngle ? 1.0 : 0.0; //light dosent reach the point of the angle between to light vector and prefered light direction is greater than cutoff angle!
 		//float lightRatio = fabsf (angleLightDirToLightVector); //clamp to zero if the dot product is negative - i.e object facing away from the light
 		float angleReflectVecToViewerVec = reflectionVector * intersectionToViewerVec; // V * R
 		angleReflectVecToViewerVec = fmaxf(0.0, angleReflectVecToViewerVec);
@@ -132,3 +143,13 @@ Point Light::cameraPosition = Point();
 	Ray Spotlight::occlusionRay(Point& intersectionWithObject) {
 		return Ray(this->lightIncidencePoint - intersectionWithObject, intersectionWithObject); //the occlusion ray base point is the light incident point, and the vector with direction from light point to intersection point
 	}
+
+	Ray Spotlight::reflectionRay(Point& intersectionWithObject, Vector& normalAtPoint) {
+		Vector vecToLight = intersectionWithObject - lightIncidencePoint; //L 
+		Vector rayDirection = normalAtPoint * 2.0 * (normalAtPoint * vecToLight) - vecToLight; // 2 * N * (N*L) - L
+		return Ray(rayDirection, intersectionWithObject);
+	}
+
+	//Ray Spotlight::refractionRay(Point& intersectionWithObject) {
+	//
+//	}
